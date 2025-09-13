@@ -1,87 +1,0 @@
-<link rel="stylesheet" href="/assets/css/style.min.css">
-<?php require __DIR__.'/partials/header.php'; require __DIR__.'/includes/db.php'; $pdo=db(); ?>
-<section class="hero">
-  <div class="hero-wrap">
-    <div class="hero-left">
-      <span class="badge">تجربة انسيابية ✨</span>
-      <h1>اشحن ألعابك واشتراكاتك بثوانٍ عبر <span style="color:#aef5e6"><?= SITE_NAME ?></span></h1>
-      <p>حوّل رصيد <b>ليبيانا/مدار</b> ثم أرسل الطلب. الدفع بالمحفظة أو تحويل مباشر.</p>
-      <div class="hero-actions">
-        <a class="btn-royal" href="wallet.php">تعبئة المحفظة</a>
-        <a class="btn red" href="games.php">تصفح الألعاب</a>
-      </div>
-    </div>
-    <div class="hero-right">
-      <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600&auto=format&fit=crop" alt="" loading="lazy" decoding="async" width="1600" height="900">
-    </div>
-  </div>
-</section>
-
-<section class="section">
-  <div class="head">
-    <h2 data-aos="fade-down">الأكثر شعبية</h2>
-    <a class="btn" href="games.php">عرض الكل</a>
-  </div>
-  <div class="grid">
-    <?php
-    $rows=$pdo->query("SELECT f.position,s.* FROM featured f JOIN services s ON s.id=f.service_id ORDER BY f.position ASC")->fetchAll();
-    if(!$rows){ $rows=$pdo->query("SELECT * FROM services ORDER BY id DESC LIMIT 6")->fetchAll(); }
-    foreach($rows as $s): ?>
-      <article class="card">
-        <img src="<?= $s['image'] ?>" alt="<?= htmlspecialchars($s['name']) ?>">
-        <div class="body">
-          <span class="tag"><?= $s['type']==='game'?'لعبة':($s['type']==='app'?'تطبيق':'اشتراك') ?></span>
-          <div class="title"><?= htmlspecialchars($s['name']) ?></div>
-          <div class="row">
-            <span class="price">باقات</span>
-            <a class="btn-royal" href="service.php?slug=<?= urlencode($s['slug']) ?>">عرض الباقات</a>
-          </div>
-        </div>
-      </article>
-    <?php endforeach; ?>
-  </div>
-</section>
-
-<!-- ==== Landing: Why GameBox ==== -->
-<section class="section why-gb" aria-labelledby="whyTitle">
-  <div class="head center"><h2 id="whyTitle">لماذا <span class="hl">GameBox</span>؟</h2></div>
-  <div class="features">
-    <div class="feat"><strong>سريع</strong><p>تنفيذ الطلبات بسرعة واعتماد فوري للمحفظة.</p></div>
-    <div class="feat"><strong>آمن</strong><p>تأكيد الطلبات والتحويلات بطريقة موثوقة.</p></div>
-    <div class="feat"><strong>دعم محلي</strong><p>فريق دعم ليبي عبر واتساب عند الحاجة.</p></div>
-    <div class="feat"><strong>أسعار واضحة</strong><p>باقات محددة بدون مفاجآت.</p></div>
-  </div>
-</section>
-
-<!-- ==== Landing: Services ==== -->
-<section class="section services-intro" aria-labelledby="svcTitle">
-  <div class="head center"><h2 id="svcTitle">الخدمات المتاحة</h2></div>
-  <div class="svc-grid">
-    <a href="games.php" class="svc-card"><span class="icon">🎮</span><div><h3>الألعاب</h3><p>اشحن شدات وباقات الألعاب الأكثر شعبية.</p></div></a>
-    <a href="apps.php" class="svc-card"><span class="icon">📱</span><div><h3>التطبيقات</h3><p>رصيد داخل التطبيقات وخدمات رقمية.</p></div></a>
-    <a href="subscriptions.php" class="svc-card"><span class="icon">🎬</span><div><h3>الاشتراكات</h3><p>Netflix, Shahid, Spotify وغيرها.</p></div></a>
-  </div>
-</section>
-
-<!-- ==== Landing: How it works ==== -->
-<section class="section how" aria-labelledby="howTitle">
-  <div class="head center"><h2 id="howTitle">كيف تعمل الخدمة؟</h2></div>
-  <ol class="steps" dir="rtl">
-    <li><span>1</span> اختر المنتج أو الاشتراك المطلوب.</li>
-    <li><span>2</span> اختر الباقة المناسبة وأرسل الطلب.</li>
-    <li><span>3</span> ادفع عبر رصيد <b>ليبيانا/مدار</b> واستلم بسرعة.</li>
-  </ol>
-  <div class="center mt-1"><a class="btn-royal" href="wallet.php">ابدأ الآن</a></div>
-</section>
-
-<!-- ==== Landing: FAQ ==== -->
-<section class="section faq" aria-labelledby="faqTitle">
-  <div class="head center"><h2 id="faqTitle">سؤال وجواب</h2></div>
-  <details><summary>كيف أدفع؟</summary><p>حوّل رصيد ليبيانا أو مدار، ثم أكمل نموذج الطلب وسيتم تأكيده.</p></details>
-  <details><summary>كم يستغرق التنفيذ؟</summary><p>عادة دقائق قليلة حسب الخدمة المختارة.</p></details>
-  <details><summary>هل يوجد دعم؟</summary><p>نعم، تواصل عبر واتساب المخصص يظهر أسفل الصفحة.</p></details>
-</section>
-
-<?php require __DIR__.'/partials/footer.php'; ?>
-
-<script defer src="/assets/js/ui.min.js"></script>
