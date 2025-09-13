@@ -1,0 +1,18 @@
+<?php if (!function_exists('esc')) { function esc($s){ return htmlspecialchars((string)$s, ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); } } ?>
+<?php
+$pdo=$pdo??db();
+function tq($pdo,$sql,$a=[]){ try{ $st=$pdo->prepare($sql); $st->execute($a); return $st->fetchAll(PDO::FETCH_ASSOC); } catch(Throwable $e){ return []; } }
+$top = tq($pdo,"SELECT s.name, COUNT(*) c, COALESCE(SUM(o.price),0) sum FROM orders o LEFT JOIN services s ON s.id=o.service_id GROUP BY o.service_id ORDER BY sum DESC LIMIT 8");
+$amounts = array_map('floatval', array_column($top,'sum'));
+?>
+<div class="card"><div class="card__body">
+  <h3>أفضل الخدمات مبيعًا</h3>
+  <canvas id="topByRevenue" class="chart" width="1080" height="260"></canvas>
+</div></div>
+
+<script>
+AdminCharts.drawBarChart(document.getElementById('topByRevenue'), <?= json_encode($amounts) ?>, '#22d3ee');
+</script>
+</main>
+<script defer src="/assets/js/site.bundle.min.js"></script>
+</body></html>

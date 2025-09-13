@@ -1,0 +1,60 @@
+<?php
+require_once __DIR__ . '/../gbx_admin_bootstrap.php';
+$pdo = gbx_pdo();
+if($_SERVER['REQUEST_METHOD']==='POST'){
+  $title = trim($_POST['title']??'');
+  $body = trim($_POST['body']??'');
+  $url = trim($_POST['url']??'') ?: null;
+  $audience = $_POST['audience'] ?? 'all';
+  $user_id = ($audience==='user') ? (int)($_POST['user_id']??0) : null;
+  $scheduled_at = trim($_POST['scheduled_at']??'') ?: null;
+  if($title && $body){
+    $pdo->prepare("INSERT INTO gbx_notifications (title, body, url, audience, user_id, scheduled_at, sent_at, created_by, created_at) VALUES (?,?,?,?,?,?,NULL,?,NOW())")
+        ->execute([$title,$body,$url,$audience,$user_id,$scheduled_at, gbx_admin_id()]);
+    $nid = $pdo->lastInsertId();
+    if(!$scheduled_at){
+      if($audience==='all'){
+        $uids = gbx_all_user_ids();
+        $ins = $pdo->prepare("INSERT INTO gbx_user_notifications (user_id, notification_id, created_at) VALUES (?,?, NOW())");
+        foreach($uids as $uid){ $ins->execute([$uid,$nid]); }
+      } elseif($audience==='user' && $user_id){
+        $pdo->prepare("INSERT INTO gbx_user_notifications (user_id, notification_id, created_at) VALUES (?,?, NOW())")->execute([$user_id,$nid]);
+      }
+      $pdo->prepare("UPDATE gbx_notifications SET sent_at=NOW() WHERE id=?")->execute([$nid]);
+    }
+    header("Location: index.php?ok=1"); exit;
+  }
+}
+$rows = $pdo->query("SELECT * FROM gbx_notifications ORDER BY id DESC LIMIT 200")->fetchAll(PDO::FETCH_ASSOC);
+?>
+<link rel="stylesheet" href="/assets/style.css">
+<h2>الإشعارات</h2>
+<form method="post" class="gbx-card" style="padding:10px">
+  <label>العنوان<input name="title" required></label>
+  <label>النص<textarea name="body" rows="4" required></textarea></label>
+  <label>رابط اختياري<input name="url"></label>
+  <label>الجمهور
+    <select name="audience">
+      <option value="all">الكل</option>
+      <option value="user">مستخدم محدد</option>
+    </select>
+  </label>
+  <label>معرّف المستخدم (إن اخترت مستخدم محدد)<input name="user_id" type="number"></label>
+  <label>جدولة عند (YYYY-MM-DD HH:MM) اختياري<input name="scheduled_at"></label>
+  <button class="gbx-btn">إنشاء</button>
+</form>
+<h3>الأرشيف</h3>
+<table class="gbx-table">
+<thead><tr><th>#</th><th>العنوان</th><th>الجمهور</th><th>رابط</th><th>أرسلت</th><th>أنشئت</th></tr></thead>
+<tbody>
+<?php foreach($rows as $r): ?>
+<tr>
+<td data-label="#">#<?php echo (int)$r['id'] ?></td>
+<td data-label="العنوان"><?php echo htmlspecialchars($r['title']) ?></td>
+<td data-label="الجمهور"><?php echo htmlspecialchars($r['audience']) ?></td>
+<td data-label="رابط"><?php echo htmlspecialchars($r['url']) ?></td>
+<td data-label="أرسلت"><?php echo htmlspecialchars($r['sent_at']) ?></td>
+<td data-label="أنشئت"><?php echo htmlspecialchars($r['created_at']) ?></td>
+</tr>
+<?php endforeach; ?>
+</tbody></table>

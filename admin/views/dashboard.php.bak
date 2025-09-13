@@ -1,0 +1,46 @@
+<?php if (!function_exists('esc')) { function esc($s){ return htmlspecialchars((string)$s, ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); } } ?>
+<?php
+$pdo=$pdo??db();
+function qv($pdo,$sql){ try{ return (float)$pdo->query($sql)->fetchColumn(); } catch(Throwable $e){ return 0; } }
+$orders = (int)qv($pdo,"SELECT COUNT(*) FROM orders");
+$users  = (int)qv($pdo,"SELECT COUNT(*) FROM users");
+$services = (int)qv($pdo,"SELECT COUNT(*) FROM services");
+$pending = (int)qv($pdo,"SELECT COUNT(*) FROM orders WHERE status IN ('pending','awaiting_transfer','processing')");
+$revenue_today = (float)qv($pdo,"SELECT COALESCE(SUM(price),0) FROM orders WHERE DATE(created_at)=CURDATE() AND status IN ('paid','completed','done','success')");
+
+function tq($pdo,$sql,$a=[]){ try{ $st=$pdo->prepare($sql); $st->execute($a); return $st->fetchAll(PDO::FETCH_ASSOC); } catch(Throwable $e){ return []; } }
+$days=14; $from=(new DateTime('-'.($days-1).' days'))->format('Y-m-d 00:00:00');
+$daily=tq($pdo,"SELECT DATE(created_at) d, COUNT(*) c, COALESCE(SUM(price),0) s FROM orders WHERE created_at>=? GROUP BY DATE(created_at)",[$from]);
+$map=[]; foreach($daily as $r){ $map[$r['d']] = ['c'=>(int)$r['c'], 's'=>(float)$r['s']]; }
+$dates=[]; $ordersSeries=[]; $revenueSeries=[];
+for($i=$days-1;$i>=0;$i--){ $d=(new DateTime("-$i days"))->format('Y-m-d'); $dates[]=$d; $ordersSeries[] = $map[$d]['c'] ?? 0; $revenueSeries[] = $map[$d]['s'] ?? 0; }
+?>
+<section class="grid kpis">
+  <div class="card"><div class="card__body"><div>إجمالي الطلبات</div><div class="num"><?= number_format($orders) ?></div></div></div>
+  <div class="card"><div class="card__body"><div>المستخدمون</div><div class="num"><?= number_format($users) ?></div></div></div>
+  <div class="card"><div class="card__body"><div>الخدمات</div><div class="num"><?= number_format($services) ?></div></div></div>
+  <div class="card"><div class="card__body"><div>قيد التنفيذ</div><div class="num"><?= number_format($pending) ?></div></div></div>
+  <div class="card"><div class="card__body"><div>إيراد اليوم</div><div class="num"><?= number_format($revenue_today,2) ?> <?= defined('CURRENCY')?CURRENCY:'LYD' ?></div></div></div>
+</section>
+
+<div class="grid" style="grid-template-columns:1fr 1fr">
+  <div class="card"><div class="card__body">
+    <h3>اتجاه الطلبات (14 يوم)</h3>
+    <canvas id="ordersChart" class="chart" width="520" height="220"></canvas>
+  </div></div>
+  <div class="card"><div class="card__body">
+    <h3>الإيراد (14 يوم)</h3>
+    <canvas id="revenueChart" class="chart" width="520" height="220"></canvas>
+  </div></div>
+</div>
+
+
+<script>
+const orders = <?= json_encode(array_values($ordersSeries)) ?>;
+const revenue = <?= json_encode(array_values($revenueSeries)) ?>;
+AdminCharts.drawLineChart(document.getElementById('ordersChart'), orders, '#8b5cf6');
+AdminCharts.drawBarChart(document.getElementById('revenueChart'), revenue, '#22d3ee');
+</script>
+</main>
+<script defer src="/assets/js/site.bundle.min.js"></script>
+</body></html>

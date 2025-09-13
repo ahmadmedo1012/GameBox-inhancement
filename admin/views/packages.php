@@ -1,0 +1,100 @@
+<?php if (!function_exists('esc')) { function esc($s){ return htmlspecialchars((string)$s, ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); } } ?>
+<?php
+$pdo=$pdo??db();
+function has_col($pdo,$t,$c){ try{$st=$pdo->prepare("SHOW COLUMNS FROM `$t` LIKE ?"); $st->execute([$c]); return (bool)$st->fetch(); }catch(Throwable $e){ return false; } }
+$msg='';
+$service_id = isset($_GET['service_id']) ? (int)$_GET['service_id'] : 0;
+$services = []; try{ $services = $pdo->query("SELECT id,name FROM services ORDER BY name")->fetchAll(PDO::FETCH_KEY_PAIR);}catch(Throwable $e){}
+$has_short = has_col($pdo,'service_packages','short_desc');
+
+if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['action'])){
+  try{
+    if($_POST['action']==='add'){
+      $sql = $has_short ? "INSERT INTO service_packages (service_id,label,price,short_desc) VALUES (?,?,?,?)"
+                        : "INSERT INTO service_packages (service_id,label,price) VALUES (?,?,?)";
+      $st=$pdo->prepare($sql);
+      $params = [(int)($_POST['service_id']), trim($_POST['label']), (float)$_POST['price']];
+      if($has_short) $params[] = trim($_POST['short_desc']??'');
+      $st->execute($params); $msg='تمت الإضافة.';
+    }elseif($_POST['action']==='edit' && isset($_POST['id'])){
+      $sql = $has_short ? "UPDATE service_packages SET service_id=?,label=?,price=?,short_desc=? WHERE id=?"
+                        : "UPDATE service_packages SET service_id=?,label=?,price=? WHERE id=?";
+      $st=$pdo->prepare($sql);
+      $params = [(int)$_POST['service_id'], trim($_POST['label']), (float)$_POST['price']];
+      if($has_short) $params[] = trim($_POST['short_desc']??'');
+      $params[] = (int)$_POST['id'];
+      $st->execute($params); $msg='تم التعديل.';
+    }elseif($_POST['action']==='delete' && isset($_POST['id'])){
+      $st=$pdo->prepare("DELETE FROM service_packages WHERE id=?"); $st->execute([(int)$_POST['id']]); $msg='تم الحذف.';
+    }
+  }catch(Throwable $e){ $msg='خطأ: '.$e->getMessage(); }
+}
+
+$where = $service_id ? "WHERE p.service_id=".$service_id : "";
+$rows = []; try{ $rows=$pdo->query("SELECT p.*, s.name AS service_name FROM service_packages p LEFT JOIN services s ON s.id=p.service_id $where ORDER BY p.id DESC")->fetchAll(PDO::FETCH_ASSOC);}catch(Throwable $e){}
+?>
+<div class="card"><div class="card__body">
+  <h3>إدارة الباقات</h3>
+  <?php if($msg): ?><div class="alert ok"><?= esc($msg) ?></div><?php endif; ?>
+  <form class="form-row" method="get" action="index.php">
+    <input type="hidden" name="view" value="packages">
+    <div><label>الخدمة</label>
+      <select class="select" name="service_id" onchange="this.form.submit()">
+        <option value="0">كل الخدمات</option>
+        <?php foreach($services as $id=>$name): ?><option value="<?= (int)$id ?>" <?= $service_id==$id?'selected':'' ?>><?= esc($name) ?></option><?php endforeach; ?>
+      </select>
+    </div>
+  </form>
+  <details class="card"><summary class="card__body"><b>إضافة باقة</b></summary>
+    <div class="card__body">
+      <form method="post">
+        <input type="hidden" name="action" value="add">
+        <div class="form-row">
+          <div><label>الخدمة</label><select class="select" name="service_id"><?php foreach($services as $id=>$name): ?><option value="<?= (int)$id ?>" <?= $service_id==$id?'selected':'' ?>><?= esc($name) ?></option><?php endforeach; ?></select></div>
+          <div><label>اسم الباقة</label><input class="input" name="label" required></div>
+        </div>
+        <div class="form-row">
+          <div><label>السعر</label><input class="input" name="price" type="number" step="0.01" required></div>
+          <?php if($has_short): ?><div><label>وصف مختصر</label><input class="input" name="short_desc"></div><?php endif; ?>
+        </div>
+        <button class="btn primary">إضافة</button>
+      </form>
+    </div>
+  </details>
+  <table class="table"><thead><tr><th>#</th><th>الخدمة</th><th>الباقة</th><th>السعر</th><?php if($has_short): ?><th>وصف</th><?php endif; ?><th>إجراء</th></tr></thead><tbody>
+  <?php foreach($rows as $r): ?>
+    <tr>
+      <td><?= (int)$r['id'] ?></td>
+      <td><?= esc($r['service_name']??('#'.$r['service_id'])) ?></td>
+      <td><?= esc($r['label']) ?></td>
+      <td><?= number_format((float)$r['price'],2) ?></td>
+      <?php if($has_short): ?><td><?= esc($r['short_desc']??'') ?></td><?php endif; ?>
+      <td>
+        <details><summary class="btn">تعديل</summary>
+          <form method="post" class="card__body">
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+            <div class="form-row">
+              <div><label>الخدمة</label><select class="select" name="service_id"><?php foreach($services as $id=>$name): ?><option value="<?= (int)$id ?>" <?= ((int)$r['service_id'])===$id?'selected':'' ?>><?= esc($name) ?></option><?php endforeach; ?></select></div>
+              <div><label>اسم الباقة</label><input class="input" name="label" value="<?= esc($r['label']) ?>"></div>
+            </div>
+            <div class="form-row">
+              <div><label>السعر</label><input class="input" name="price" type="number" step="0.01" value="<?= esc($r['price']) ?>"></div>
+              <?php if($has_short): ?><div><label>وصف مختصر</label><input class="input" name="short_desc" value="<?= esc($r['short_desc']??'') ?>"></div><?php endif; ?>
+            </div>
+            <button class="btn">حفظ</button>
+          </form>
+        </details>
+        <form method="post" style="margin-top:6px" onsubmit="return confirm('حذف الباقة؟');">
+          <input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+          <button class="btn danger">حذف</button>
+        </form>
+      </td>
+    </tr>
+  <?php endforeach; ?>
+  </tbody></table>
+</div></div>
+
+</main>
+<script defer src="/assets/app.js"></script>
+</body></html>

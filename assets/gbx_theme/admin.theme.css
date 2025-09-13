@@ -1,0 +1,31 @@
+
+/* GBX Admin Theme (non-destructive include) */
+:root{--gbx-primary:#1A3C8C;--gbx-primary-variant:#2A4FB0;--gbx-primary-variant2:#5F7BE0;
+--gbx-accent:#C9A227;--gbx-surface:#F5F7F8;--gbx-surface-dark:#0E121A;--gbx-success:#10B981;--gbx-warning:#F59E0B;--gbx-error:#EF4444;
+--radius:18px;--shadow:0 8px 24px rgba(0,0,0,.08);--muted:#667085;color-scheme: light dark}
+:root[data-theme=dark]{--bg:var(--gbx-surface-dark);--fg:#E8ECEF;--card:#151b26;--muted:#98A2B3}
+:root[data-theme=light]{--bg:var(--gbx-surface);--fg:#0b1220;--card:#ffffff}
+html{direction:rtl}
+body{background:var(--bg);color:var(--fg);font-family:'Cairo','Tajawal',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;margin:0;overflow-x:hidden}
+a{color:var(--gbx-primary);text-decoration:none}
+header, .topbar, .navbar{position:sticky;top:0;z-index:1000;background:rgba(255,255,255,.6);backdrop-filter:saturate(1.1) blur(8px)}
+:root[data-theme=dark] header,:root[data-theme=dark] .topbar,:root[data-theme=dark] .navbar{background:rgba(14,18,26,.7)}
+.gbx-card,.card,.panel,.box{background:var(--card);border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.08);padding:14px}
+.gbx-grid{display:grid;gap:12px}
+@media(min-width:540px){.gbx-grid.cols-2{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:900px){.gbx-grid.cols-3{grid-template-columns:repeat(3,1fr)}.gbx-grid.cols-4{grid-template-columns:repeat(4,1fr)}}
+button,.btn,input[type=submit]{padding:.7rem 1rem;border-radius:14px;border:0;background:var(--gbx-primary);color:#fff;cursor:pointer;transition:transform .18s ease,opacity .18s ease}
+.btn.secondary{background:var(--gbx-accent);color:#1a1a1a}
+.table, table{width:100%;border-collapse:collapse}
+.table th,.table td, table th, table td{padding:.7rem;border-bottom:1px solid rgba(0,0,0,.08);text-align:inherit}
+@media(max-width:680px){
+  table thead, .table thead{display:none}
+  table tr, .table tr{display:block;margin:0 0 12px;background:transparent}
+  table td, .table td{display:flex;justify-content:space-between;gap:12px}
+  table td::before, .table td::before{content:attr(data-label);font-weight:700}
+}
+input,select,textarea{width:100%;padding:.7rem;border-radius:12px;border:1px solid rgba(0,0,0,.2);background:transparent;color:inherit}
+label{display:block;margin:.3rem 0}
+.alert{border-radius:12px;padding:10px;background:#ef44441a;color:#EF4444}
+.success{background:#10B9811a;color:#10B981}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}

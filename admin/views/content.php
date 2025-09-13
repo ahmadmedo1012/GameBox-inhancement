@@ -1,0 +1,74 @@
+<?php if (!function_exists('esc')) { function esc($s){ return htmlspecialchars((string)$s, ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); } } ?>
+<?php
+$pdo=$pdo??db();
+$tables=['featured','notifications'];
+$t=$_GET['t']??$tables[0];
+if(!in_array($t,$tables,true)) $t=$tables[0];
+function cols($pdo,$t){ try{ $st=$pdo->query("SHOW COLUMNS FROM `$t`"); return $st->fetchAll(PDO::FETCH_COLUMN); }catch(Throwable $e){ return []; } }
+$columns=cols($pdo,$t);
+$msg='';
+if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['action'])){
+  try{
+    if($_POST['action']==='add'){
+      $setCols=[]; $place=[]; $vals=[];
+      foreach($columns as $c){ if($c==='id') continue; if(isset($_POST[$c])){ $setCols[]="`$c`"; $place[]='?'; $vals[]=trim((string)$_POST[$c]); } }
+      if($setCols){ $sql="INSERT INTO `$t` (".implode(',',$setCols).") VALUES (".implode(',',$place).")"; $pdo->prepare($sql)->execute($vals); $msg='تمت الإضافة.'; }
+    }elseif($_POST['action']==='edit' && isset($_POST['id'])){
+      $sets=[]; $vals=[]; foreach($columns as $c){ if($c==='id') continue; if(isset($_POST[$c])){ $sets[]="`$c`=?"; $vals[]=trim((string)$_POST[$c]); } }
+      if($sets){ $vals[]=(int)$_POST['id']; $sql="UPDATE `$t` SET ".implode(',',$sets)." WHERE id=?"; $pdo->prepare($sql)->execute($vals); $msg='تم التعديل.'; }
+    }elseif($_POST['action']==='delete' && isset($_POST['id'])){
+      $pdo->prepare("DELETE FROM `$t` WHERE id=?")->execute([(int)$_POST['id']]); $msg='تم الحذف.';
+    }
+  }catch(Throwable $e){ $msg='خطأ: '.$e->getMessage(); }
+}
+$rows=[]; try{ $rows=$pdo->query("SELECT * FROM `$t` ORDER BY id DESC LIMIT 300")->fetchAll(PDO::FETCH_ASSOC);}catch(Throwable $e){}
+?>
+<div class="card"><div class="card__body">
+  <h3>إدارة المحتوى</h3>
+  <form method="get" class="form-row" action="index.php">
+    <input type="hidden" name="view" value="content">
+    <div><label>الجدول</label>
+      <select class="select" name="t" onchange="this.form.submit()">
+        <?php foreach($tables as $x): ?><option value="<?= esc($x) ?>" <?= $t===$x?'selected':'' ?>><?= esc($x) ?></option><?php endforeach; ?>
+      </select>
+    </div>
+  </form>
+  <?php if($msg): ?><div class="alert ok"><?= esc($msg) ?></div><?php endif; ?>
+  <details class="card"><summary class="card__body"><b>إضافة سجل</b></summary>
+    <div class="card__body">
+      <form method="post"><input type="hidden" name="action" value="add">
+        <?php foreach($columns as $c): if($c==='id') continue; ?>
+          <div class="form-row"><div><label><?= esc($c) ?></label><input class="input" name="<?= esc($c) ?>"></div></div>
+        <?php endforeach; ?>
+        <button class="btn primary">إضافة</button>
+      </form>
+    </div>
+  </details>
+  <table class="table"><thead><tr>
+    <?php foreach($columns as $c): ?><th><?= esc($c) ?></th><?php endforeach; ?>
+    <th>إجراء</th></tr></thead><tbody>
+    <?php foreach($rows as $r): ?><tr>
+      <?php foreach($columns as $c): ?><td><?= esc((string)($r[$c]??'')) ?></td><?php endforeach; ?>
+      <td>
+        <details><summary class="btn">تعديل</summary>
+          <form method="post" class="card__body">
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+            <?php foreach($columns as $c): if($c==='id') continue; ?>
+              <div class="form-row"><div><label><?= esc($c) ?></label><input class="input" name="<?= esc($c) ?>" value="<?= esc((string)($r[$c]??'')) ?>"></div></div>
+            <?php endforeach; ?>
+            <button class="btn">حفظ</button>
+          </form>
+        </details>
+        <form method="post" style="margin-top:6px" onsubmit="return confirm('حذف السجل؟');">
+          <input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+          <button class="btn danger">حذف</button>
+        </form>
+      </td>
+    </tr><?php endforeach; ?>
+  </tbody></table>
+</div></div>
+
+</main>
+<script defer src="/assets/app.js"></script>
+</body></html>

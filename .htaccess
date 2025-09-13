@@ -1,0 +1,22 @@
+<IfModule mod_headers.c>
+  # ----------------------------------------------------------------------
+  # HTTP Security Headers
+  # ----------------------------------------------------------------------
+
+  # Tell browsers to always use HTTPS (HSTS)
+  # (Note: only uncomment this if you are sure your site will always be on HTTPS)
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
+  # Prevent Clickjacking by stopping the site from being embedded in iframes on other sites
+  Header always set X-Frame-Options "SAMEORIGIN"
+
+  # Prevent browsers from trying to guess the content type
+  Header always set X-Content-Type-Options "nosniff"
+
+  # Control what information is sent in the 'Referer' header
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+  # A basic set of permissions to disable potentially intrusive features
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+
+</IfModule>

@@ -1,0 +1,24 @@
+
+// === Mobile Header/Footer/Intro helpers ===
+(function(){
+  try{
+    var hdr = document.querySelector('header.topbar') || document.querySelector('header, .header');
+    function setHH(){
+      try{
+        var hh = hdr ? Math.max(56, Math.round(hdr.getBoundingClientRect().height)) : 64;
+        document.documentElement.style.setProperty('--header-h', hh+'px');
+      }catch(e){}
+    }
+    setHH(); window.addEventListener('resize', setHH, {passive:true});
+    // Guard: prevent header from being hidden on scroll by legacy scripts
+    var obs = new MutationObserver(function(){
+      if(!hdr) return;
+      if(hdr.classList.contains('ui-hide')) hdr.classList.remove('ui-hide');
+      if(hdr.style && /translate|^-/.test(hdr.style.transform||'')) hdr.style.transform='';
+      setHH();
+    });
+    if(hdr) obs.observe(hdr, {attributes:true, attributeFilter:['class','style']});
+    // Also on scroll, re-assert visible
+    window.addEventListener('scroll', function(){ if(hdr) hdr.classList.remove('ui-hide'); }, {passive:true});
+  }catch(e){}
+})();

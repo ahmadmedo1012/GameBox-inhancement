@@ -1,0 +1,71 @@
+/* ======================================================================
+   GameBox — Account Mobile Polish v3 (SAFE)
+   Scope: only when <body> has .is-account-page (set by JS)
+   No PHP/HTML edits required
+   ====================================================================== */
+body.is-account-page{ /* scope marker - no visual */ }
+
+/* Rhythm & titles */
+@media (max-width: 640px){
+  body.is-account-page .container, 
+  body.is-account-page .page{ padding-inline: 12px; }
+  body.is-account-page h1, 
+  body.is-account-page h2, 
+  body.is-account-page .section-title{ font-size:1.08rem; font-weight:900; margin:10px 2px 8px; }
+  body.is-account-page .muted{ opacity:.8 }
+}
+
+/* Buttons - align with royal theme without renaming classes */
+body.is-account-page .btn.btn-primary{
+  background: linear-gradient(135deg, var(--gb-royal, #4169e1), var(--gb-royal-2, #2b9df4));
+  border: 1px solid color-mix(in oklab, var(--gb-royal, #4169e1) 28%, transparent);
+  color:#09101e; font-weight:800; border-radius:14px;
+  box-shadow: 0 10px 30px rgba(65,105,225,.28);
+}
+body.is-account-page .btn.btn-primary:active{ transform: translateY(0) scale(.98) }
+body.is-account-page .btn.btn-primary:hover{ transform: translateY(-2px) }
+
+/* Tables -> Cards */
+@media (max-width: 640px){
+  body.is-account-page .table.responsive{ width:100%; border-collapse: collapse; }
+  body.is-account-page .table.responsive thead{ display:none; }
+  body.is-account-page .table.responsive tbody{ display:block; }
+  body.is-account-page .table.responsive tr{
+    display:block; margin:10px 0;
+    background: var(--card-bg, #fff);
+    border:1px solid var(--gb-border, rgba(0,0,0,.12));
+    border-radius:12px; overflow:hidden;
+  }
+  html[data-theme="dark"] body.is-account-page .table.responsive tr{ background: rgba(255,255,255,.04); }
+  body.is-account-page .table.responsive td{
+    display:grid; grid-template-columns: 120px 1fr; gap:8px; align-items:center;
+    padding:10px;
+    border-bottom:1px dashed rgba(125,125,125,.18);
+  }
+  body.is-account-page .table.responsive td:last-child{ border-bottom:none; }
+  body.is-account-page .table.responsive td::before{
+    content: attr(data-label);
+    font-weight:900; color: var(--gb-royal, #4169e1);
+  }
+}
+
+/* Summary rows / status badges (non-destructive) */
+body.is-account-page .badge,
+body.is-account-page .status{ display:inline-block; padding:4px 10px; border-radius:999px; font-weight:800; font-size:.85rem; }
+body.is-account-page .status.paid, 
+body.is-account-page .status.success{ background: color-mix(in oklab, #16a34a 12%, transparent); color:#065f2a; border:1px solid color-mix(in oklab, #16a34a 26%, transparent); }
+body.is-account-page .status.pending{ background: color-mix(in oklab, #f59e0b 12%, transparent); color:#6b4000; border:1px solid color-mix(in oklab, #f59e0b 26%, transparent); }
+body.is-account-page .status.failed, 
+body.is-account-page .status.rejected{ background: color-mix(in oklab, #ef4444 12%, transparent); color:#7f1d1d; border:1px solid color-mix(in oklab, #ef4444 26%, transparent); }
+
+/* Wallet balance highlight if present anywhere */
+body.is-account-page .wallet, 
+body.is-account-page .balance, 
+body.is-account-page .wallet-balance{
+  color: var(--gb-royal, #4169e1); font-weight:900;
+}
+
+/* Pagination / actions tidy */
+@media (max-width: 640px){
+  body.is-account-page .actions{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+}

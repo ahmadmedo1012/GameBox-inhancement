@@ -1,0 +1,78 @@
+<?php if (!function_exists('esc')) { function esc($s){ return htmlspecialchars((string)$s, ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); } } ?>
+<?php
+$pdo=$pdo??db();
+$msg='';
+if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['action'])){
+  try{
+    if($_POST['action']==='add'){
+      $st=$pdo->prepare("INSERT INTO services (name,slug,image,category) VALUES (?,?,?,?)");
+      $st->execute([trim($_POST['name']),trim($_POST['slug']),trim($_POST['image']),trim($_POST['category'])]);
+      $msg='تمت الإضافة.';
+    }elseif($_POST['action']==='edit' && isset($_POST['id'])){
+      $st=$pdo->prepare("UPDATE services SET name=?,slug=?,image=?,category=? WHERE id=?");
+      $st->execute([trim($_POST['name']),trim($_POST['slug']),trim($_POST['image']),trim($_POST['category']),(int)$_POST['id']]);
+      $msg='تم التعديل.';
+    }elseif($_POST['action']==='delete' && isset($_POST['id'])){
+      $st=$pdo->prepare("DELETE FROM services WHERE id=?");
+      $st->execute([(int)$_POST['id']]);
+      $msg='تم الحذف.';
+    }
+  }catch(Throwable $e){ $msg='خطأ: '.$e->getMessage(); }
+}
+$rows=[]; try{ $rows=$pdo->query("SELECT * FROM services ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);}catch(Throwable $e){}
+?>
+<div class="card"><div class="card__body">
+  <h3>الخدمات</h3>
+  <?php if($msg): ?><div class="alert ok"><?= esc($msg) ?></div><?php endif; ?>
+  <details class="card"><summary class="card__body"><b>إضافة خدمة</b></summary>
+    <div class="card__body">
+      <form method="post">
+        <input type="hidden" name="action" value="add">
+        <div class="form-row">
+          <div><label>الاسم</label><input class="input" name="name" required></div>
+          <div><label>slug</label><input class="input" name="slug" required></div>
+        </div>
+        <div class="form-row">
+          <div><label>الصورة</label><input class="input" name="image" placeholder="https://source.unsplash.com/800x600/?game"></div>
+          <div><label>الفئة</label><select class="select" name="category"><option value="game">لعبة</option><option value="app">تطبيق</option><option value="subscription">اشتراك</option></select></div>
+        </div>
+        <button class="btn primary">إضافة</button>
+      </form>
+    </div>
+  </details>
+  <table class="table"><thead><tr><th>#</th><th>الاسم</th><th>الفئة</th><th>الصورة</th><th>إجراء</th></tr></thead><tbody>
+  <?php foreach($rows as $r): ?>
+    <tr>
+      <td><?= (int)$r['id'] ?></td>
+      <td><?= esc($r['name']) ?><div class="meta"><?= esc($r['slug']) ?></div></td>
+      <td><span class="badge"><?= esc($r['category']??'') ?></span></td>
+      <td><?php $img=esc($r['image']??''); if($img): ?><img decoding="async" loading="lazy" src="<?= $img ?>" style="width:80px;height:50px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"><?php endif; ?></td>
+      <td>
+        <details><summary class="btn">تعديل</summary>
+          <form method="post" class="card__body">
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+            <div class="form-row">
+              <div><label>الاسم</label><input class="input" name="name" value="<?= esc($r['name']) ?>"></div>
+              <div><label>slug</label><input class="input" name="slug" value="<?= esc($r['slug']) ?>"></div>
+            </div>
+            <div class="form-row">
+              <div><label>الصورة</label><input class="input" name="image" value="<?= esc($r['image']??'') ?>"></div>
+              <div><label>الفئة</label><select class="select" name="category"><?php foreach(['game','app','subscription'] as $c): ?><option value="<?= $c ?>" <?= ($r['category']??'')===$c?'selected':'' ?>><?= $c ?></option><?php endforeach; ?></select></div>
+            </div>
+            <button class="btn">حفظ</button>
+          </form>
+        </details>
+        <form method="post" style="margin-top:6px" onsubmit="return confirm('حذف الخدمة؟');">
+          <input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+          <button class="btn danger">حذف</button>
+        </form>
+      </td>
+    </tr>
+  <?php endforeach; ?>
+  </tbody></table>
+</div></div>
+
+</main>
+<script defer src="/assets/js/site.bundle.min.js"></script>
+</body></html>
